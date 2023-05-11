@@ -29,7 +29,8 @@ func handleRequest(request *http.Request, resultReciever chan *http.Response) {
 		panic(err)
 	}
 	fmt.Println(string(dump))
-	content := "Hello World\n"
+	// content := "Hello World\n"
+	content := string(dump) + "\n" // サーバ側のログは順番がバラバラで、クライアント側は順番通りか試す。
 	// セッションを維持するためにKeep-Aliveでないといけない
 	response := &http.Response{
 		StatusCode:    200,
