@@ -39,9 +39,32 @@
 
 ### 7.2.1 サーバー側の実装例
 
-[server](01-unicast/server/main.go)
-[client](01-unicast/client/main.go)
+[server](01-unicast/server/main.go)  
 
-- POSIXでは、直接`recvfrom()`や`sendto()`で通信してよい
+### 7.2.2 クライアント側の実装例
+
+[client](01-unicast/client/main.go)  
+
+- POSIXでは、直接`recvfrom()`や`sendto()`で通信してよい (コネクションを確立するステップがない)
   - server: `listen()`, `accept()`不要
   - client: `connect()`不要
+
+## 7.3 UDP のマルチキャストの実装例
+
+- マルチキャスト
+  - 送信元からマルチキャストアドレスにデータを送信
+  - マルチキャストアドレスに属するコンピュータにデータが届く
+  - IANAという団体が管理している
+  - 用途 : 大容量データ配信（動画など）
+- ブロードキャスト
+  - 送信元からブロードキャストアドレスにデータを送信
+  - 同一LAN内のすべてのコンピュータにデータが届く
+  - 用途 : DHCP、ルーティング情報の更新
+
+### 7.3.1 サーバー側の実装
+
+[server](02-multicast/server/main.go)
+
+### 7.3.2 クライアント側の実装
+
+[client](02-multicast/client/main.go)
