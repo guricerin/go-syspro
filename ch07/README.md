@@ -1,5 +1,7 @@
 # 7 UDPソケットを使ったマルチキャスト通信
 
+※ 勘違いしているところ多いかも。  
+
 ## 7.1 UDP と TCP の用途の違い
 
 from: https://www.reddit.com/r/ProgrammerHumor/comments/krft3r/tcp_vs_udp/  
