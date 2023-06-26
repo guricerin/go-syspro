@@ -8,6 +8,8 @@ import (
 
 func main() {
 	counter := 0
+	// パッシブ方式
+	// 監視したいファイルをOS側に通知、ファイルが変更されたら教えてもらう
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		panic(err)
@@ -18,7 +20,7 @@ func main() {
 	go func() {
 		for {
 			select {
-			case event := <-watcher.Events:
+			case event := <-watcher.Events: // ブロッキングしてイベントを待機
 				log.Println("event:", event)
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					log.Println("created file:", event.Name)
@@ -48,6 +50,8 @@ func main() {
 	// 監視対象フォルダを追加
 	err = watcher.Add(".")
 	if err != nil {
+		// panic()でないのはなぜ？fatalだとdeferされない
+		// ref: https://devlights.hatenablog.com/entry/2022/06/07/073000
 		log.Fatal(err)
 	}
 	<-done
