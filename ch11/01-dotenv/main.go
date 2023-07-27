@@ -16,7 +16,6 @@ func main() {
 	fmt.Println(*filename)
 	fmt.Println(cmdName)
 	args := flag.Args()[1:]
-	flag.Args()
 
 	cmd := exec.Command(cmdName, args...)
 
