@@ -13,6 +13,7 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.0.0 // indirect
 	github.com/billziss-gh/cgofuse v1.5.0 // indirect
+	github.com/creack/pty v1.1.18 // indirect
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
