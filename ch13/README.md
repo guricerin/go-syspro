@@ -273,3 +273,40 @@ const (
   - https://github.com/lestrrat-go/server-starter
 
 ### 13.5.1 Server::Starterの使い方
+
+```sh
+start_server --port {port_no} --pid-file {pid_file} -- ./{server_app}
+```
+
+### 13.5.2 Server::Starterが子プロセスを再起動する仕組み
+
+### 13.5.3 Server::Starter対応のサーバーの実装例
+
+実演。  
+
+## 13.6 Go言語ランタイムにおけるシグナルの内部実装
+
+- マルチスレッドでのシグナル
+  - シグナル処理用のスレッドとそれ以外のスレッドをわけるべき
+
+## 13.7 Windowsとシグナル
+
+- GUI用のメッセージループの例  
+
+```cpp
+// ref: https://github.com/microsoft/Windows-classic-samples/blob/1d363ff4bd17d8e20415b92e2ee989d615cc0d91/Samples/RadialController/cpp/RadialController.cpp  
+// VC++
+
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);  // Dispatch message to WindowProc
+
+        if (msg.message == WM_QUIT)
+        {
+            Windows::Foundation::Uninitialize();
+            break;
+        }
+    }
+```
