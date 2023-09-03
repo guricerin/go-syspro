@@ -105,6 +105,8 @@ ubuntu22.04 on WSL2で`man 7 signal`実行した結果（抜粋）
 
 ### 13.2.1 ハンドルできないグナル
 
+実演。  
+
 - SIGKILL
   - プロセスを強制終了
   - `top`コマンドで実演する
@@ -151,3 +153,123 @@ fg {process_name}
 - SIGTSTP
   - `Ctrl + Z`で停止、バックグラウンドジョブ化
   - ハンドル可能なSIGSTOP
+- SIGCONT
+  - フォアグラウンドジョブ化
+- SIGWINCH
+  - ウィンドウサイズ変更
+- SIGHUP
+  - 疑似ターミナルから切断されるときに呼ばれるシグナル
+
+### 13.2.4 たまに使うかもしれない、その他のシグナル
+
+- SIGUSR1, SIGUSR2
+  - ユーザ定義のシグナル
+  - どういう意味のシグナルか、アプリ側で自由に決めて良い
+- SIGPWR
+  - 外部電源が切断し、無停電電源装置が使われたがバッテリー残量が低下したときにOSから送信される
+
+## 13.3 Go言語によるシグナルの種類
+
+```go
+// syscall_unix.go
+
+// A Signal is a number describing a process signal.
+// It implements the os.Signal interface.
+type Signal int
+```
+
+```go
+// zerrors_linux_amd64.go
+
+// Signals
+const (
+	SIGABRT   = Signal(0x6)
+	SIGALRM   = Signal(0xe)
+	SIGBUS    = Signal(0x7)
+	SIGCHLD   = Signal(0x11)
+	SIGCLD    = Signal(0x11)
+	SIGCONT   = Signal(0x12)
+	SIGFPE    = Signal(0x8)
+	SIGHUP    = Signal(0x1)
+	SIGILL    = Signal(0x4)
+	SIGINT    = Signal(0x2)
+	SIGIO     = Signal(0x1d)
+	SIGIOT    = Signal(0x6)
+	SIGKILL   = Signal(0x9)
+	SIGPIPE   = Signal(0xd)
+	SIGPOLL   = Signal(0x1d)
+	SIGPROF   = Signal(0x1b)
+	SIGPWR    = Signal(0x1e)
+	SIGQUIT   = Signal(0x3)
+	SIGSEGV   = Signal(0xb)
+	SIGSTKFLT = Signal(0x10)
+	SIGSTOP   = Signal(0x13)
+	SIGSYS    = Signal(0x1f)
+	SIGTERM   = Signal(0xf)
+	SIGTRAP   = Signal(0x5)
+	SIGTSTP   = Signal(0x14)
+	SIGTTIN   = Signal(0x15)
+	SIGTTOU   = Signal(0x16)
+	SIGUNUSED = Signal(0x1f)
+	SIGURG    = Signal(0x17)
+	SIGUSR1   = Signal(0xa)
+	SIGUSR2   = Signal(0xc)
+	SIGVTALRM = Signal(0x1a)
+	SIGWINCH  = Signal(0x1c)
+	SIGXCPU   = Signal(0x18)
+	SIGXFSZ   = Signal(0x19)
+)
+```
+
+## 13.4 シグナルのハンドラを書く
+
+- C言語の場合
+  - `signal()`や`sigaction()`の第一引数にフックしたいシグナル種、第二引数にユーザ定義のシグナルハンドラを指定
+  - ref: [シグナルハンドラ内では非同期安全な関数のみを呼び出す - JPCERT/CC](https://www.jpcert.or.jp/sc-rules/c-sig30-c.html)
+- Go言語の場合
+  - チャネルを使う
+    - `signal.NotifyContext()`
+    - `signal.Notify()`
+- みかんOSの場合
+  - シグナルハンドラテーブルとシグナルハンドラ登録システムコールを作成し、それらを各プロセスにコピーしてた（気がする）
+
+実演。  
+
+- コンテナ時代とシグナル
+  - k8sやdockerでは外からタスクを終了させるとき、SIGTERMをコンテナ内プロセスに送信
+  - コンテナで動作させるシステムを作るときは、シグナルを受け取ってお片付けしてからプロセスを終了するようなシステムを作りましょう
+
+
+### 13.4.1 シグナルを無視する
+
+`signal.Ignore()`を使う。  
+実演。  
+
+### 13.4.1 シグナルのハンドラをデフォルトに戻す
+
+`signal.Reset()`を使う。  
+
+### 13.4.1 シグナルの送付を停止させる
+
+シグナル受信を停止。  
+`signal.Stop()`を使う。  
+
+### 13.4.4 シグナルを他のプロセスに送る
+
+`os.Process`構造体の`Signal()`メソッドを使う。  
+実演。  
+
+- プロセスを外部から停止するお作法
+  - SIGKILLは子プロセスまでは殺せない
+    - まずSIGTERMを送信して、プロセス側に自分で終了処理させるのがよい
+  - SIGSTOPで停止状態のプロセスはSIGKILL以外には反応しない
+    - まずSIGCONTでプロセスを再起動後、SIGTERMを送信するのがよい
+
+## 13.5 シグナルの応用例 (Server::Starter)
+
+- Server::Starter
+  - 新しいサーバを起動して新しいリクエストをそちらに流しつつ、古いサーバのリクエストが完了したら正しく終了させる
+  - これを利用できるようにサーバを作れば、サービス停止時間ゼロでサーバ再起動が可能
+  - https://github.com/lestrrat-go/server-starter
+
+### 13.5.1 Server::Starterの使い方
