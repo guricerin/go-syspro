@@ -371,7 +371,7 @@ start_server --port 9999 --pid-file app.pid -- ./a.out
 ps aufx | grep a.out
 # サーバが動いてるか確認
 curl localhost:9999
-# 停止させてみる
+# start_serverを再起動させてみる
 kill -HUP `cat app.pid`
 # もう一回アクセスしてみる
 curl localhost:9999
