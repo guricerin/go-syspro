@@ -17,6 +17,7 @@ func main() {
 	toctx, cancel2 := context.WithTimeout(ctx, time.Second*5)
 	defer cancel2()
 
+	fmt.Println("waiting...")
 	select {
 	case <-sigctx.Done():
 		fmt.Println("signal recieved")

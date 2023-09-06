@@ -85,4 +85,8 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,macos,go
 
+# WSL2
 *Zone.Identifier
+
+# ch13 13.5.3
+*.pid

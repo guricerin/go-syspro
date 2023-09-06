@@ -44,8 +44,7 @@
   2. ttyからカーネルに制御文字を渡す（`termios cc_c INTR`で検索検索ゥ！！！）
   3. カーネルが`SIGINT`シグナルをカレントプロセスに送信
   4. カレントプロセスがシグナルハンドラを実行
-  5. カレントプロセスが終了
-    - シグナルハンドラを弄っていたら、この限りではない
+  5. カレントプロセスが終了（シグナルハンドラを弄っていたら、この限りではない）
 
 ### 参考: システムコール
 - プロセス -> カーネル
@@ -54,8 +53,9 @@
 ## 13.1 シグナルのライフサイクル
 
 1. raise
-2. send
-3. handle
+1. generate
+1. send
+1. handle
 
 ## 13.2 シグナルの種類
 
@@ -128,29 +128,29 @@ ubuntu22.04 on WSL2で`man 7 signal`実行した結果（抜粋）
 
 ### 13.2.1 ハンドルできないグナル
 
-実演。  
+#### 実演
 
 - SIGKILL
   - プロセスを強制終了
-  - `top`コマンドで実演する
 
 ```sh
 # ターミナルAで実行
 top
 
 # ターミナルBで実行
+ps a | grep 'top'
 kill -KILL {process_id}
 ```
 
 - SIGSTOP
   - プロセスを一時停止・バックグラウンドジョブ化
-  - `top`コマンドで実演する
 
 ```sh
 # ターミナルAで実行
 top
 
 # ターミナルBで実行
+ps a | grep 'top'
 pkill -STOP {process_name}
 
 # ターミナルAで実行
@@ -162,6 +162,7 @@ fg {process_name}
 
 - SIGTERM
   - `kill()`システムコール、`kill`コマンドがデフォで送信
+  - プロセスの終了
 - SIGHUP
   - コンソールアプリ: プロセスの終了
   - サーバアプリ: 設定ファイルの再読み込みを外部から指示 
@@ -244,6 +245,15 @@ const (
 )
 ```
 
+- SIGINTとSIGKILLは全OSで使用可能
+
+```go
+var (
+  Interrupt Signal = syscall.SIGINT
+  Kill      Signal = syscall.SIGKILL
+)
+```
+
 ## 13.4 シグナルのハンドラを書く
 
 - C言語の場合
@@ -257,7 +267,19 @@ const (
   - 割り込みとシグナルを厳密に区別してなかった（気がする）
   - 割り込みハンドラテーブルと割り込みハンドラ登録システムコールを作成し、それらを各プロセスに配ってた（気がする）
 
-実演。  
+#### 実演
+
+```sh
+cd ch13/13.4_signal-handler
+go run main.go
+# Ctrl + C
+```
+
+```sh
+cd ch13/13.4_signal-handler-2
+go run main.go
+# Ctrl + C
+```
 
 - コンテナ時代とシグナル
   - k8sやdockerでは外からタスクを終了させるとき、SIGTERMをコンテナ内プロセスに送信
@@ -266,13 +288,23 @@ const (
 ### 13.4.1 シグナルを無視する
 
 `signal.Ignore()`を使う。  
-実演。  
 
-### 13.4.1 シグナルのハンドラをデフォルトに戻す
+#### 実演
+
+```sh
+cd ch13//13.4.1_ignore-signal
+go run main.go
+# 最初の5秒の間にCtrl + C
+
+go run main.go
+# 次の5秒の間にCtrl + C
+```
+
+### 13.4.2 シグナルのハンドラをデフォルトに戻す
 
 `signal.Reset()`を使う。  
 
-### 13.4.1 シグナルの送付を停止させる
+### 13.4.3 シグナルの送付を停止させる
 
 シグナル受信を停止。  
 `signal.Stop()`を使う。  
@@ -280,7 +312,19 @@ const (
 ### 13.4.4 シグナルを他のプロセスに送る
 
 `os.Process`構造体の`Signal()`メソッドを使う。  
-実演。  
+
+#### 実演
+
+```sh
+# ターミナルAで実行
+top
+
+# ターミナルBで実行
+cd ch13/13.4.4_send-signal
+ps a | grep 'top'
+go run main.go {process_id}
+# Ctrl + C
+```
 
 - プロセスを外部から停止するお作法
   - SIGKILLは子プロセスまでは殺せない
@@ -290,7 +334,7 @@ const (
 
 ## 13.5 シグナルの応用例 (Server::Starter)
 
-- Server::Starter
+- `Server::Starter`
   - 新しいサーバを起動して新しいリクエストをそちらに流しつつ、古いサーバのリクエストが完了したら正しく終了させる
   - これを利用できるようにサーバを作れば、サービス停止時間ゼロでサーバ再起動が可能
   - https://github.com/lestrrat-go/server-starter
@@ -303,9 +347,38 @@ start_server --port {port_no} --pid-file {pid_file} -- ./{server_app}
 
 ### 13.5.2 Server::Starterが子プロセスを再起動する仕組み
 
+- `start_server`にSIGHUPを送信して再起動できる
+
+```sh
+kill -HUP `cat app.pid`
+```
+
+- SIGHUPを受信した`Server::Starter`は、新しいプロセスを起動し、起動済みの子プロセスにはSIGTERMを送信する
+- 子プロセスであるサーバが「SIGTERMを受信したら新規のリクエスト受付を停止し、処理中のリクエストが完了するまで待機してから終了する」という実装になっていれば、ダウンタイム無しでサービスを更新可能
+
 ### 13.5.3 Server::Starter対応のサーバーの実装例
 
-実演。  
+#### 実演 
+
+```sh
+# ターミナルAで実行
+cd ch13/13.5.3_graceful-restart
+go build -o a.out
+start_server --port 9999 --pid-file app.pid -- ./a.out
+
+# ターミナルBで実行
+# プロセスの親子関係を確認
+ps aufx | grep a.out
+# サーバが動いてるか確認
+curl localhost:9999
+# 停止させてみる
+kill -HUP `cat app.pid`
+# もう一回アクセスしてみる
+curl localhost:9999
+
+# ターミナルAで実行
+# Ctrl + C
+```
 
 ## 13.6 Go言語ランタイムにおけるシグナルの内部実装
 
@@ -314,7 +387,7 @@ start_server --port {port_no} --pid-file {pid_file} -- ./{server_app}
 
 ## 13.7 Windowsとシグナル
 
-- GUI用のメッセージループの例  
+- GUI用のメッセージング・ループの例  
 
 ```cpp
 // ref: https://github.com/microsoft/Windows-classic-samples/blob/1d363ff4bd17d8e20415b92e2ee989d615cc0d91/Samples/RadialController/cpp/RadialController.cpp  
