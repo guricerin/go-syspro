@@ -339,6 +339,17 @@ go run main.go {process_id}
   - これを利用できるようにサーバを作れば、サービス停止時間ゼロでサーバ再起動が可能
   - https://github.com/lestrrat-go/server-starter
 
+```sh
+# start_serverコマンドを使用可能にする
+
+# バイナリをインストール
+go install github.com/lestrrat/go-server-starter/cmd/start_server
+
+# .zshrcに以下を追記
+export PATH="$HOME/go/bin:$PATH"
+export GOPATH="$(go env GOPATH)"
+```
+
 ### 13.5.1 Server::Starterの使い方
 
 ```sh
