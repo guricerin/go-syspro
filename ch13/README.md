@@ -502,14 +502,38 @@ cd ch13/13.6.3_multi-thread
 
 ## 13.7 Windowsとシグナル
 
-- GUI用のメッセージング・ループの例  
+### Windowsに存在するシグナル
+- SIGABRT, SIGFPE, SIGILL, SIGINT, SIGSEGV, SIGTERM
+- 存在はするが自由自在に使えるとは言ってない
+- 例えばSIGINTはプログラムやコマンドから送信する術がなく、`Ctrl + C`でしか送信できない
+
+### Windowsのプロセス間通信
+- WindowsはGUI前提のOSなので、シグナルではなくメッセージ（イベント）を使うのが主流
+- プロセスを終了させるときはWM_CLOSEメッセージを送信する
+
+#### `MSG`構造体
+
+```cpp
+// https://learn.microsoft.com/ja-jp/windows/win32/api/winuser/ns-winuser-msg?redirectedfrom=MSDN
+typedef struct tagMSG {
+  HWND   hwnd;
+  UINT   message;
+  WPARAM wParam;
+  LPARAM lParam;
+  DWORD  time;
+  POINT  pt;
+  DWORD  lPrivate;
+} MSG, *PMSG, *NPMSG, *LPMSG;
+```
+
+#### GUI用のメッセージループの例 
 
 ```cpp
 // ref: https://github.com/microsoft/Windows-classic-samples/blob/1d363ff4bd17d8e20415b92e2ee989d615cc0d91/Samples/RadialController/cpp/RadialController.cpp  
 // VC++
 
     MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0))
+    while (GetMessage(&msg, NULL, 0, 0)) // メッセージキューからdequeue
     {
         TranslateMessage(&msg);
         DispatchMessage(&msg);  // Dispatch message to WindowProc
