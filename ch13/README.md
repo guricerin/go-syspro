@@ -502,6 +502,9 @@ cd ch13/13.6.3_multi-thread
       1. 内部では`atomic`パッケージ使ってるから、シグナルハンドラで実行されて共有メモリ領域を読み書きしても大丈夫なはず。しらんけど。
 1. `signal`パッケージは`signal_recv()`を使って共有メモリ領域からシグナルを取り出し、`Notify()`で渡されたチャネルに伝達
 
+N:Mモデルについては以下を見ると良さげ  
+- https://zenn.dev/hsaki/books/golang-concurrency/viewer/gointernal
+
 ## 13.7 Windowsとシグナル
 
 ### Windowsに存在するシグナル
