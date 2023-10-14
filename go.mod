@@ -14,6 +14,7 @@ require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.0.0 // indirect
 	github.com/billziss-gh/cgofuse v1.5.0 // indirect
 	github.com/creack/pty v1.1.18 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -33,6 +34,10 @@ require (
 	github.com/mattn/go-runewidth v0.0.3 // indirect
 	github.com/peterh/liner v1.2.2 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/reactivex/rxgo v1.0.1 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/testify v1.8.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	gocloud.dev v0.30.0 // indirect
 	golang.org/x/crypto v0.10.0 // indirect
@@ -47,4 +52,5 @@ require (
 	google.golang.org/grpc v1.56.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
