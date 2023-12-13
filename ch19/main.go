@@ -27,28 +27,12 @@ func init() {
 
 func main() {
 	abs, _ := filepath.Abs("./")
+	log.Printf("abs: %s\n", abs)
 	// このプログラム自身をinitプロセスとして起動
-	factory, err := libcontainer.New(abs, libcontainer.InitArgs(os.Args[0], "init"))
+	factory, err := libcontainer.New("/var/lib/container", libcontainer.InitArgs(os.Args[0], "init"))
 	if err != nil {
 		log.Fatal(err)
 		return
-	}
-
-	capabilities := []string{
-		"CAP_CHOWN",
-		"CAP_DAC_OVERRIDE",
-		"CAP_FSETID",
-		"CAP_FOWNER",
-		"CAP_MKNOD",
-		"CAP_NET_RAW",
-		"CAP_SETGID",
-		"CAP_SETUID",
-		"CAP_SETFCAP",
-		"CAP_SETPCAP",
-		"CAP_NET_BIND_SERVICE",
-		"CAP_SYS_CHROOT",
-		"CAP_KILL",
-		"CAP_AUDIT_WRITE",
 	}
 	defaultMountFlags := unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV
 	var devices []*devices.Rule
@@ -56,20 +40,82 @@ func main() {
 		devices = append(devices, &device.Rule)
 	}
 	config := &configs.Config{
+		// Rootfs: "/your/path/to/rootfs",
 		Rootfs: abs + "/rootfs",
 		Capabilities: &configs.Capabilities{
-			Bounding:    capabilities,
-			Effective:   capabilities,
-			Inheritable: capabilities,
-			Permitted:   capabilities,
-			Ambient:     capabilities,
+			Bounding: []string{
+				"CAP_CHOWN",
+				"CAP_DAC_OVERRIDE",
+				"CAP_FSETID",
+				"CAP_FOWNER",
+				"CAP_MKNOD",
+				"CAP_NET_RAW",
+				"CAP_SETGID",
+				"CAP_SETUID",
+				"CAP_SETFCAP",
+				"CAP_SETPCAP",
+				"CAP_NET_BIND_SERVICE",
+				"CAP_SYS_CHROOT",
+				"CAP_KILL",
+				"CAP_AUDIT_WRITE",
+			},
+			Effective: []string{
+				"CAP_CHOWN",
+				"CAP_DAC_OVERRIDE",
+				"CAP_FSETID",
+				"CAP_FOWNER",
+				"CAP_MKNOD",
+				"CAP_NET_RAW",
+				"CAP_SETGID",
+				"CAP_SETUID",
+				"CAP_SETFCAP",
+				"CAP_SETPCAP",
+				"CAP_NET_BIND_SERVICE",
+				"CAP_SYS_CHROOT",
+				"CAP_KILL",
+				"CAP_AUDIT_WRITE",
+			},
+			Permitted: []string{
+				"CAP_CHOWN",
+				"CAP_DAC_OVERRIDE",
+				"CAP_FSETID",
+				"CAP_FOWNER",
+				"CAP_MKNOD",
+				"CAP_NET_RAW",
+				"CAP_SETGID",
+				"CAP_SETUID",
+				"CAP_SETFCAP",
+				"CAP_SETPCAP",
+				"CAP_NET_BIND_SERVICE",
+				"CAP_SYS_CHROOT",
+				"CAP_KILL",
+				"CAP_AUDIT_WRITE",
+			},
+			Ambient: []string{
+				"CAP_CHOWN",
+				"CAP_DAC_OVERRIDE",
+				"CAP_FSETID",
+				"CAP_FOWNER",
+				"CAP_MKNOD",
+				"CAP_NET_RAW",
+				"CAP_SETGID",
+				"CAP_SETUID",
+				"CAP_SETFCAP",
+				"CAP_SETPCAP",
+				"CAP_NET_BIND_SERVICE",
+				"CAP_SYS_CHROOT",
+				"CAP_KILL",
+				"CAP_AUDIT_WRITE",
+			},
 		},
 		Namespaces: configs.Namespaces([]configs.Namespace{
 			{Type: configs.NEWNS},
 			{Type: configs.NEWUTS},
 			{Type: configs.NEWIPC},
 			{Type: configs.NEWPID},
+			{Type: configs.NEWUSER},
 			{Type: configs.NEWNET},
+			{Type: configs.NEWCGROUP},
 		}),
 		Cgroups: &configs.Cgroup{
 			Name:   "test-container",
@@ -80,7 +126,8 @@ func main() {
 			},
 		},
 		MaskPaths: []string{
-			"/proc/kcore", "/sys/firmware",
+			"/proc/kcore",
+			"/sys/firmware",
 		},
 		ReadonlyPaths: []string{
 			"/proc/sys", "/proc/sysrq-trigger", "/proc/irq", "/proc/bus",
@@ -128,6 +175,20 @@ func main() {
 				Flags:       defaultMountFlags | unix.MS_RDONLY,
 			},
 		},
+		UidMappings: []configs.IDMap{
+			{
+				ContainerID: 0,
+				HostID:      1000,
+				Size:        65536,
+			},
+		},
+		GidMappings: []configs.IDMap{
+			{
+				ContainerID: 0,
+				HostID:      1000,
+				Size:        65536,
+			},
+		},
 		Networks: []*configs.Network{
 			{
 				Type:    "loopback",
@@ -151,22 +212,23 @@ func main() {
 		return
 	}
 
+	log.Println("run container")
 	process := &libcontainer.Process{
-		Args:   []string{"/bin/sh"},
+		Args:   []string{"/bin/bash"},
 		Env:    []string{"PATH=/bin"},
-		User:   "root",
+		User:   "daemon",
 		Stdin:  os.Stdin,
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
+		Init:   true,
 	}
-
-	log.Println("run container")
 	err = container.Run(process)
 	if err != nil {
 		container.Destroy()
 		log.Fatal(err)
 		return
 	}
+
 	log.Println("wait for process to finish")
 	_, err = process.Wait()
 	if err != nil {
