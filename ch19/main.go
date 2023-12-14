@@ -215,7 +215,7 @@ func main() {
 
 	log.Println("run container")
 	process := &libcontainer.Process{
-		Args:   []string{"/bin/bash"},
+		Args:   []string{"/bin/sh"},
 		Env:    []string{"PATH=/bin"},
 		User:   "daemon",
 		Stdin:  os.Stdin,
